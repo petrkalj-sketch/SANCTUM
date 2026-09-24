@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#2c3e50">
+  <title>SANCTUM</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Авторизация -->
+    <div id="authContainer" class="auth-container">
+      <div class="auth-box">
+        <h1>SANCTUM</h1>
+        <div class="tabs">
+          <button id="loginTab" class="tab active">Вход</button>
+          <button id="registerTab" class="tab">Регистрация</button>
+        </div>
+        <div id="loginForm">
+          <input type="text" id="loginUsername" placeholder="Логин (латиница)" />
+          <input type="password" id="loginPassword" placeholder="Пароль" />
+          <button id="loginBtn">Войти</button>
+          <div id="loginError" class="error"></div>
+        </div>
+        <div id="registerForm" style="display:none;">
+          <input type="text" id="regUsername" placeholder="Логин (латиница)" />
+          <input type="password" id="regPassword" placeholder="Пароль (мин. 4 симв.)" />
+          <button id="registerBtn">Зарегистрироваться</button>
+          <div id="regError" class="error"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Основное приложение -->
+    <div id="appContainer" style="display:none;">
+      <header>
+        <button id="menuToggle" class="icon-btn" aria-label="Меню">☰</button>
+        <h2>SANCTUM</h2>
+        <button id="profileBtn" class="icon-btn" aria-label="Профиль">⚙️</button>
+        <span id="currentUser">Пользователь</span>
+        <input type="text" id="searchInput" placeholder="Поиск по UID..." />
+        <button id="searchBtn" aria-label="Найти">🔍</button>
+        <button id="themeToggle" class="theme-toggle" aria-label="Сменить тему" title="Светлая/тёмная тема">🌙</button>
+        <button id="logoutBtn">Выйти</button>
+      </header>
+
+      <div id="overlay" class="overlay"></div>
+
+      <div class="main-layout">
+        <aside class="sidebar" id="sidebar">
+          <div class="sidebar-header">
+            <h3>Комнаты</h3>
+            <button id="createRoomBtn">+ Создать</button>
+          </div>
+          <ul id="roomList"></ul>
+        </aside>
+        <section class="content">
+          <div id="roomPlaceholder" class="placeholder"><p>Выберите комнату слева</p></div>
+          <div id="roomContent" style="display:none;">
+            <div class="room-header">
+              <h3 id="roomTitle"></h3>
+              <div class="room-header-actions">
+                <button id="voiceToggleBtn" title="Голосовой чат">🎙️ Голос</button>
+                <button id="roomSettingsBtn" title="Настройки комнаты">⚙️</button>
+              </div>
+            </div>
+
+            <!-- Панель голосового чата -->
+            <div id="voicePanel">
+              <span class="voice-title">В эфире</span>
+              <div class="voice-users" id="voiceUsers"></div>
+              <div class="voice-controls">
+                <button id="voiceMuteBtn">🎤 Микрофон</button>
+                <button id="voiceLeaveBtn">Выйти</button>
+              </div>
+            </div>
+
+            <div class="tabs">
+              <button class="tab active" data-tab="chat">Чат</button>
+              <button class="tab" data-tab="tasks">Задачи</button>
+            </div>
+            <div id="chatTab" class="tab-content">
+              <div id="messageList"></div>
+              <div class="message-input">
+                <input type="text" id="messageInput" placeholder="Введите сообщение..." />
+                <label for="fileInput" class="file-label">📎</label>
+                <input type="file" id="fileInput" accept="image/*" style="display:none;" />
+                <button id="sendBtn">Отправить</button>
+              </div>
+            </div>
+            <div id="tasksTab" class="tab-content" style="display:none;">
+              <div class="tasks-header"><button id="createTaskBtn">+ Новая задача</button></div>
+              <div id="taskList"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer"></div>
+
+  <!-- Создание комнаты -->
+  <div id="createRoomModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button class="close">&times;</button>
+      <h3>Создать комнату</h3>
+      <input type="text" id="newRoomName" placeholder="Название комнаты" />
+      <input type="text" id="newRoomDesc" placeholder="Описание (необязательно)" />
+      <input type="password" id="newRoomPass" placeholder="Пароль (оставьте пустым, если без пароля)" />
+      <label><input type="checkbox" id="newRoomPublic" /> Сделать комнату публичной</label>
+      <button id="confirmCreateRoom">Создать</button>
+      <div id="createRoomError" class="error"></div>
+    </div>
+  </div>
+
+  <!-- Пароль комнаты -->
+  <div id="joinRoomModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button class="close">&times;</button>
+      <h3>Введите пароль комнаты</h3>
+      <input type="password" id="joinRoomPass" placeholder="Пароль" />
+      <button id="confirmJoinRoom">Войти</button>
+      <div id="joinRoomError" class="error"></div>
+    </div>
+  </div>
+
+  <!-- Создание задачи -->
+  <div id="createTaskModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button class="close">&times;</button>
+      <h3>Новая задача</h3>
+      <input type="text" id="taskTitle" placeholder="Название задачи" />
+      <textarea id="taskDesc" placeholder="Описание (необязательно)"></textarea>
+      <input type="datetime-local" id="taskDeadline" />
+      <select id="taskAssignee"><option value="">Не назначено</option></select>
+      <button id="confirmCreateTask">Создать</button>
+      <div id="createTaskError" class="error"></div>
+    </div>
+  </div>
+
+  <!-- Профиль -->
+  <div id="profileModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button class="close">&times;</button>
+      <h3>Настройки профиля</h3>
+      <div class="profile-avatar">
+        <img id="profileAvatar" src="" alt="Аватар" />
+        <label for="avatarInput" class="file-label">Загрузить аватар</label>
+        <input type="file" id="avatarInput" accept="image/*" style="display:none;" />
+      </div>
+      <div><strong>Ваш UID:</strong> <span id="profileUid"></span></div>
+      <textarea id="profileBio" placeholder="О себе..."></textarea>
+      <button id="saveProfileBtn">Сохранить</button>
+      <button id="deleteAccountBtn">Удалить аккаунт</button>
+      <div id="profileError" class="error"></div>
+    </div>
+  </div>
+
+  <!-- Поиск -->
+  <div id="searchResultModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button class="close">&times;</button>
+      <h3>Результат поиска</h3>
+      <div id="searchResultContent"></div>
+      <div id="searchResultError" class="error"></div>
+    </div>
+  </div>
+
+  <!-- Просмотр профиля -->
+  <div id="viewProfileModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button class="close">&times;</button>
+      <h3>Профиль пользователя</h3>
+      <div id="viewProfileContent"></div>
+    </div>
+  </div>
+
+  <!-- Настройки комнаты -->
+  <div id="roomSettingsModal" class="modal" style="display:none;">
+    <div class="modal-content modal-wide">
+      <button class="close">&times;</button>
+      <h3>Настройки комнаты</h3>
+      <div class="settings-tabs">
+        <button class="settings-tab active" data-stab="general">Настройки</button>
+        <button class="settings-tab" data-stab="members">Участники</button>
+      </div>
+      <div id="settingsGeneral" class="settings-tab-content">
+        <label>Название</label>
+        <input type="text" id="settingsRoomName" />
+        <label>Описание</label>
+        <textarea id="settingsRoomDesc"></textarea>
+        <label>Новый пароль <span style="color:var(--text-3);font-size:12px;">(оставьте пустым — не менять)</span></label>
+        <input type="password" id="settingsRoomPass" />
+        <label><input type="checkbox" id="settingsRemovePass" /> Убрать пароль</label>
+        <label><input type="checkbox" id="settingsRoomPublic" /> Публичная комната</label>
+        <button id="saveRoomSettingsBtn">Сохранить</button>
+        <button id="deleteRoomBtn" class="btn-danger">Удалить комнату</button>
+        <div id="roomSettingsError" class="error"></div>
+      </div>
+      <div id="settingsMembers" class="settings-tab-content" style="display:none;">
+        <div class="members-header">Участников: <strong id="membersCount">0</strong></div>
+        <ul id="membersList"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
